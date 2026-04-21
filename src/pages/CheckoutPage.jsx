@@ -9,12 +9,18 @@ import Logo from "../assets/images/logo.png";
 import MobileLogo from "../assets/images/mobile-logo.png";
 export function CheckoutPage({ cart }) {
   const [deliveryOptions, setDeliveryOptions] = useState();
+  const [paymentSummary, setPaymentSummary] = useState(null)
   useEffect(() => {
     axios
       .get("/api/delivery-options?expand=estimatedDeliveryTime")
       .then((response) => {
         setDeliveryOptions(response.data);
       });
+
+      axios.get('/api/payment-summary')
+      .then((response) => {
+        setPaymentSummary(response.data)
+      })
   }, []);
   return (
     <>
@@ -48,10 +54,9 @@ export function CheckoutPage({ cart }) {
         <div className="checkout-grid">
           <div className="order-summary">
             {cart.map((cartitem) => {
-              const selectedDeliveryOption = deliveryOptions
-                .find((deliveryOption) => {
+              const selectedDeliveryOption = deliveryOptions?.find((deliveryOption) => {
                     return deliveryOption.id === cartitem.deliveryOptionId
-              })
+              })|| {};
               return (
                 <div  className="cart-item-container" key={cartitem.productId}>
                   <div className="delivery-date">
@@ -92,7 +97,7 @@ export function CheckoutPage({ cart }) {
                         Choose a delivery option:
                       </div>
                       {deliveryOptions.map((deliveryOption) => {
-                        let priceString = 'FREE Shiping'
+                        let priceString = 'FREE Shipping'
                         if (deliveryOption.priceCents > 0){
                            priceString = `${formatMoney(deliveryOption.priceCents)} - Shipping`
                         }
@@ -126,28 +131,28 @@ export function CheckoutPage({ cart }) {
             <div className="payment-summary-title">Payment Summary</div>
 
             <div className="payment-summary-row">
-              <div>Items (3):</div>
-              <div className="payment-summary-money">$42.75</div>
+              <div>Items ({paymentSummary?.totalItems}):</div>
+              <div className="payment-summary-money">{formatMoney(paymentSummary?.productCostCents ?? 0)}</div>
             </div>
 
             <div className="payment-summary-row">
               <div>Shipping &amp; handling:</div>
-              <div className="payment-summary-money">$4.99</div>
+              <div className="payment-summary-money">{formatMoney(paymentSummary?.shippingCostCents ?? 0)}</div>
             </div>
 
             <div className="payment-summary-row subtotal-row">
               <div>Total before tax:</div>
-              <div className="payment-summary-money">$47.74</div>
+              <div className="payment-summary-money">{formatMoney(paymentSummary?.totalCostBeforeTaxCents ?? 0)}</div>
             </div>
 
             <div className="payment-summary-row">
               <div>Estimated tax (10%):</div>
-              <div className="payment-summary-money">$4.77</div>
+              <div className="payment-summary-money">{formatMoney(paymentSummary?.taxCents ?? 0)}</div>
             </div>
 
             <div className="payment-summary-row total-row">
               <div>Order total:</div>
-              <div className="payment-summary-money">$52.51</div>
+              <div className="payment-summary-money">{formatMoney(paymentSummary?.totalCostCents ?? 0)}</div>
             </div>
 
             <button className="place-order-button button-primary">
